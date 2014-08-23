@@ -97,7 +97,7 @@ defmodule RrbTree do
   end
 
   def balance([x | xs], e, result) when e <= @e do
-    balance(xs, @e, [x | result])
+    balance(xs, e, [x | result])
   end
 
   def balance([%Node{slots: slots} | xs], extra_steps, result) when tuple_size(slots) == 0 do
@@ -108,7 +108,7 @@ defmodule RrbTree do
     balance([x2 | xs], @e, [x1 | result])
   end
 
-  def balance([x1 = %Node{slots: slots}, x2 | xs], extra_steps, result) when slots < @b do
+  def balance([x1 = %Node{slots: slots}, x2 | xs], extra_steps, result) when tuple_size(slots) < @b do
     [x1, x2] = join_nodes(x1, x2)
     balance([x1, x2 | xs], extra_steps - 1, result)
   end
@@ -141,15 +141,20 @@ defmodule RrbTree do
   end
 
   def do_concat(%Node{} = ltree, %Node{} = rtree, _hl = 2, _hr = 2) do
-    # TODO: wrap leafs in nodes
     make_tree(Tuple.to_list(ltree.slots) ++ Tuple.to_list(rtree.slots), 2)
-    # TODO: unwrap leafs inside node as slot
   end
 
   def do_concat(%Node{} = ltree, %Node{} = rtree, hl, hr) when hl == hr do
     mtree = do_concat(rhand(ltree), lhand(rtree), hl - 1, hr - 1)
-    # TODO: handle case when mtree.h > ltree.h OR mtree.h > rtree.h
-    make_tree([lbody(ltree), mtree.node, rbody(rtree)], hl)
+
+    # TODO: check correctness when mtree.h > ltree.h OR mtree.h > rtree.h
+    if mtree.h == hl do
+      # IO.puts "mtree.h > hl #{inspect mtree}"
+      make_tree(Tuple.to_list(lbody(ltree).slots) ++ Tuple.to_list(mtree.node.slots) ++ Tuple.to_list(rbody(rtree).slots), hl)
+    else
+      # IO.puts "else \nlbody #{inspect(lbody(ltree))}\n mtree #{inspect(mtree)} \n rbody #{inspect(rbody(rtree))}"
+      make_tree([lbody(ltree), mtree.node, rbody(rtree)], hl)
+    end
   end
 
   def rhand(%Node{} = node) do
@@ -169,9 +174,17 @@ defmodule RrbTree do
 
   def rbody(%Node{ranges: ranges, slots: slots}) do
     %Node{
-      ranges: Tuple.delete_at(ranges, 0),
+      ranges: delete_first_range(ranges),
       slots: Tuple.delete_at(slots, 0)
     }
+  end
+
+  def delete_first_range(ranges) do
+    fst = elem(ranges, 0)
+
+    Tuple.delete_at(ranges, 0)
+      |> Tuple.to_list
+      |> Enum.reduce({}, fn(r, rs) -> append(rs, r - fst) end)
   end
 
   def first(tuple) do

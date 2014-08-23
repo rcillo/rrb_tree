@@ -93,7 +93,21 @@ defmodule RrbTreeTest do
       }
     }
 
-    rt = %RrbTree{h: 2,
+    rt = lt
+
+    t = %RrbTree{
+      h: 3,
+      node: %Node{
+        ranges: {16, 32},
+        slots: {lt.node, rt.node}
+      }
+    }
+
+    assert RrbTree.concat(lt, rt) == t
+  end
+
+  test "concatenate hiegher trees" do
+    t2 = %RrbTree{h: 2,
       node: %Node{
         ranges: {4, 8, 12, 16},
         slots: {
@@ -105,14 +119,22 @@ defmodule RrbTreeTest do
       }
     }
 
-    t = %RrbTree{
+    t3 = %RrbTree{
       h: 3,
       node: %Node{
         ranges: {16, 32},
-        slots: {lt.node, rt.node}
+        slots: {t2.node, t2.node}
       }
     }
 
-    assert RrbTree.concat(lt, rt) == t
+    t = %RrbTree{
+      h: 3,
+      node: %Node{
+        ranges: {16, 32, 48, 64},
+        slots: {t2.node, t2.node, t2.node, t2.node}
+      }
+    }
+
+    assert RrbTree.concat(t3, t3) == t
   end
 end
