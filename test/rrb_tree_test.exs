@@ -79,4 +79,40 @@ defmodule RrbTreeTest do
 
     assert RrbTree.get(t, 3) == 4
   end
+
+  test "concatenates two tree of the same height" do
+    lt = %RrbTree{h: 2,
+      node: %Node{
+        ranges: {4, 8, 12, 16},
+        slots: {
+          {1, 2, 3, 4},
+          {5, 6, 7, 8},
+          {9, 10, 11, 12},
+          {13, 14, 15, 16}
+        }
+      }
+    }
+
+    rt = %RrbTree{h: 2,
+      node: %Node{
+        ranges: {4, 8, 12, 16},
+        slots: {
+          {1, 2, 3, 4},
+          {5, 6, 7, 8},
+          {9, 10, 11, 12},
+          {13, 14, 15, 16}
+        }
+      }
+    }
+
+    t = %RrbTree{
+      h: 3,
+      node: %Node{
+        ranges: {16, 32},
+        slots: {lt.node, rt.node}
+      }
+    }
+
+    assert RrbTree.concat(lt, rt) == t
+  end
 end

@@ -14,7 +14,7 @@ defmodule RrbTree do
 
   @m 2 # Integer: tree branching exponent, as in 2^m. E.g, m = 2 so branching factor of 4.
 
-  @b (2 <<< @m)
+  @b (1 <<< @m)
 
   @e 1 # Maximum extra steps on radix search miss
 
@@ -43,27 +43,53 @@ defmodule RrbTree do
 
   def root(nodes, h) do
     do_root(nodes, %RrbTree{
-      h: h + 1,
+      h: h,
       node: %Node{}
     })
   end
 
+  def do_root([], root) do
+    root
+  end
+
   def do_root(nodes, root = %RrbTree{node: %Node{slots: root_slots}}) when tuple_size(root_slots) == @b do
+    nr = root(nodes, root.h)
+
     %RrbTree{
       h: root.h + 1,
       node: %Node{
-        ranges: { elem(root.node.ranges, tuple_size(root.node.ranges) - 1) },
-        slots: { root.node, root(nodes, root.h).node }
+        ranges: { last_range(root.node.ranges), last_range(root.node.ranges) + last_range(nr.node.ranges) },
+        slots: { root.node, nr.node }
       }
     }
   end
 
-  def do_root([node | nodes], root) do
+  def do_root([node = %Node{} | nodes], root = %RrbTree{}) do
     do_root(nodes,
       %{root |
         node: %{ root.node |
-          slots: append(root.slots, node),
-          ranges: append(root.ranges, last(root.ranges) + last(node.ranges))
+          slots: append(root.node.slots, node),
+          ranges: append(root.node.ranges, last_range(root.node.ranges) + last_range(node.ranges))
+        }
+      }
+    )
+  end
+
+  def last_range(ranges) when tuple_size(ranges) == 0 do
+    0
+  end
+
+  def last_range(ranges) do
+    last(ranges)
+  end
+
+  # TODO: remove duplication of logic for Leaf and Nodes
+  def do_root([node | nodes], root = %RrbTree{}) do
+    do_root(nodes,
+      %{root |
+        node: %{ root.node |
+          slots: append(root.node.slots, node),
+          ranges: append(root.node.ranges, last_range(root.node.ranges) + tuple_size(node)) # TODO: check if || works as expected
         }
       }
     )
@@ -73,11 +99,11 @@ defmodule RrbTree do
     balance_nodes(nodes, extra_steps, [])
   end
 
-  def balance_nodes([], @e, result) do
+  def balance_nodes([], _e, result) do
     Enum.reverse(result)
   end
 
-  def balance_nodes([x | xs], @e, result) do
+  def balance_nodes([x | xs], e, result) when e <= @e do
     balance_nodes(xs, @e, [x | result])
   end
 
@@ -160,7 +186,7 @@ defmodule RrbTree do
   end
 
   def last(tuple) do
-    elem(tuple, tuple_size(tuple))
+    elem(tuple, tuple_size(tuple) - 1)
   end
 
   def append(tuple, e) do
