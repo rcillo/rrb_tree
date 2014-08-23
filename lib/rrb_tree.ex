@@ -31,6 +31,8 @@ defmodule RrbTree do
     p = Enum.reduce(nodes, 0, fn node, sum -> count_items(node) + sum end)
     extra_steps = a - ((p - 1) >>> @m) - 1
 
+    #IO.puts "extra steps #{extra_steps}"
+
     nodes |> balance(extra_steps) |> root(h)
   end
 
@@ -100,36 +102,66 @@ defmodule RrbTree do
     balance(xs, e, [x | result])
   end
 
-  def balance([%Node{slots: slots} | xs], extra_steps, result) when tuple_size(slots) == 0 do
-    balance(xs, extra_steps - 1, result)
+  def balance([x1 = %Node{}, x2 = %Node{slots: slots} | xs], extra_steps, result) when tuple_size(slots) == 0 do
+    balance(xs, extra_steps - 1, [x1 | result])
   end
 
-  def balance([x1 = %Node{slots: slots}, x2 | xs], _extra_steps, result) when tuple_size(slots) == @b do
-    balance([x2 | xs], @e, [x1 | result])
+  def balance([x1 = %Node{slots: slots}, x2 | xs], extra_steps, result) when tuple_size(slots) == @b do
+    balance([x2 | xs], extra_steps, [x1 | result])
   end
 
   def balance([x1 = %Node{slots: slots}, x2 | xs], extra_steps, result) when tuple_size(slots) < @b do
     [x1, x2] = join_nodes(x1, x2)
-    balance([x1, x2 | xs], extra_steps - 1, result)
+    balance([x1, x2 | xs], extra_steps, result)
   end
 
+  # TODO: Tuple only duplication
+#  def balance([slots | xs], extra_steps, result) when tuple_size(slots) == 0 do
+#    balance(xs, extra_steps - 1, result)
+#  end
+  def balance([x1, x2 | xs], e, result) when tuple_size(x2) == 0 do
+    balance(xs, e - 1, [x1 | result])
+  end
+
+  def balance([x1, x2 | xs], e, result) when tuple_size(x1) == @b do
+    balance([x2 | xs], e, [x1 | result])
+  end
+
+  def balance([x1, x2 | xs], extra_steps, result) when tuple_size(x1) < @b do
+    [x1, x2] = join_nodes(x1, x2)
+    balance([x1, x2 | xs], extra_steps, result)
+  end
+
+  # TODO: Node only
   def join_nodes(n1 = %Node{slots: n1_slots}, n2 = %Node{slots: n2_slots}) when tuple_size(n1_slots) == @b or tuple_size(n2_slots) == 0 do
     [n1, n2]
   end
 
   # TODO: try not to generate many nodes untill have a full node
   # TODO: handle leafs differently then internal nodes
-  def join_nodes(n1, n2) do
-    [
+  def join_nodes(n1 = %Node{}, n2 = %Node{}) do
+    join_nodes(
       %Node{
         ranges: Tuple.insert_at(n1.ranges, tuple_size(n1.ranges), elem(n2.ranges, tuple_size(n2.ranges) - 1) + elem(n1.ranges, tuple_size(n1.ranges) - 1)),
         slots: Tuple.insert_at(n1.slots, tuple_size(n1.slots), elem(n2.slots, 0))
       },
       %Node{
-        ranges: Tuple.delete_at(n2.ranges, 0),
+        ranges: delete_first_range(n2.ranges),
         slots: Tuple.delete_at(n2.slots, 0)
       }
-    ]
+    )
+  end
+
+  # TODO: Leaf only
+  def join_nodes(n1, n2) when tuple_size(n1) == @b or tuple_size(n2) == 0 do
+    [n1, n2]
+  end
+
+  def join_nodes(n1, n2) do
+    join_nodes(
+      append(n1, elem(n2, 0)),
+      Tuple.delete_at(n2, 0)
+    )
   end
 
   def count_items(%Node{} = node) do
@@ -153,7 +185,7 @@ defmodule RrbTree do
       make_tree(Tuple.to_list(lbody(ltree).slots) ++ Tuple.to_list(mtree.node.slots) ++ Tuple.to_list(rbody(rtree).slots), hl)
     else
       # IO.puts "else \nlbody #{inspect(lbody(ltree))}\n mtree #{inspect(mtree)} \n rbody #{inspect(rbody(rtree))}"
-      make_tree([lbody(ltree), mtree.node, rbody(rtree)], hl)
+      # make_tree([lbody(ltree), mtree.node, rbody(rtree)], hl)
     end
   end
 

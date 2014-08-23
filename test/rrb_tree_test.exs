@@ -137,4 +137,72 @@ defmodule RrbTreeTest do
 
     assert RrbTree.concat(t3, t3) == t
   end
+
+  test "paper figure 7 example" do
+    t1 = %RrbTree{h: 2,
+      node: %Node{
+        ranges: {3, 7, 10, 14},
+        slots: {
+          {1, 2, 3},
+          {4, 5, 6, 7},
+          {8, 9, 10},
+          {11, 12, 13, 14}
+        }
+      }
+    }
+
+    t2 = %RrbTree{h: 2,
+      node: %Node{
+        ranges: {4, 6},
+        slots: {
+          {1, 2, 3, 4},
+          {5, 6}
+        }
+      }
+    }
+
+    t3 = %RrbTree{h: 2,
+      node: %Node{
+        ranges: {3, 5, 7, 10},
+        slots: {
+          {1, 2, 3},
+          {4, 5},
+          {6, 7},
+          {8, 9 , 10}
+        }
+      }
+    }
+
+    t4 = %RrbTree{h: 2,
+      node: %Node{
+        ranges: {3, 7},
+        slots: {
+          {1, 2, 3},
+          {4, 5, 6, 7}
+        }
+      }
+    }
+
+    t1_2 = %RrbTree{h: 3,
+      node: %Node{
+        ranges: {14, 20},
+        slots: {t1.node, t2.node}
+      }
+    }
+
+    t3_4 = %RrbTree{h: 3,
+      node: %Node{
+        ranges: {10, 17},
+        slots: {t3.node, t4.node}
+      }
+    }
+
+    t = %RrbTree{h: 3,
+            node: %RrbTree.Node{ranges: {14, 27, 30, 37},
+             slots: {%RrbTree.Node{ranges: {3, 7, 10, 14}, slots: {{1, 2, 3}, {4, 5, 6, 7}, {8, 9, 10}, {11, 12, 13, 14}}},
+              %RrbTree.Node{ranges: {4, 8, 11, 13}, slots: {{1, 2, 3, 4}, {5, 6, 1, 2}, {3, 4, 5}, {6, 7}}}, %RrbTree.Node{ranges: {3}, slots: {{8, 9, 10}}},
+              %RrbTree.Node{ranges: {3, 7}, slots: {{1, 2, 3}, {4, 5, 6, 7}}}}}}
+
+    assert RrbTree.concat(t1_2, t3_4) == t
+  end
 end
