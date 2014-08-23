@@ -31,14 +31,7 @@ defmodule RrbTree do
     p = Enum.reduce(nodes, 0, fn node, sum -> count_items(node) + sum end)
     extra_steps = a - ((p - 1) >>> @m) - 1
 
-    nodes |> balance_nodes(extra_steps) |> root(h)
-  end
-
-  def root([root], h) do
-    %RrbTree{
-      h: h,
-      node: root
-    }
+    nodes |> balance(extra_steps) |> root(h)
   end
 
   def root(nodes, h) do
@@ -95,29 +88,29 @@ defmodule RrbTree do
     )
   end
 
-  def balance_nodes(nodes, extra_steps) do
-    balance_nodes(nodes, extra_steps, [])
+  def balance(nodes, extra_steps) do
+    balance(nodes, extra_steps, [])
   end
 
-  def balance_nodes([], _e, result) do
+  def balance([], _e, result) do
     Enum.reverse(result)
   end
 
-  def balance_nodes([x | xs], e, result) when e <= @e do
-    balance_nodes(xs, @e, [x | result])
+  def balance([x | xs], e, result) when e <= @e do
+    balance(xs, @e, [x | result])
   end
 
-  def balance_nodes([%Node{slots: slots} | xs], extra_steps, result) when tuple_size(slots) == 0 do
-    balance_nodes(xs, extra_steps - 1, result)
+  def balance([%Node{slots: slots} | xs], extra_steps, result) when tuple_size(slots) == 0 do
+    balance(xs, extra_steps - 1, result)
   end
 
-  def balance_nodes([x1 = %Node{slots: slots}, x2 | xs], _extra_steps, result) when tuple_size(slots) == @b do
-    balance_nodes([x2 | xs], @e, [x1 | result])
+  def balance([x1 = %Node{slots: slots}, x2 | xs], _extra_steps, result) when tuple_size(slots) == @b do
+    balance([x2 | xs], @e, [x1 | result])
   end
 
-  def balance_nodes([x1 = %Node{slots: slots}, x2 | xs], extra_steps, result) when slots < @b do
+  def balance([x1 = %Node{slots: slots}, x2 | xs], extra_steps, result) when slots < @b do
     [x1, x2] = join_nodes(x1, x2)
-    balance_nodes([x1, x2 | xs], extra_steps - 1, result)
+    balance([x1, x2 | xs], extra_steps - 1, result)
   end
 
   def join_nodes(n1 = %Node{slots: n1_slots}, n2 = %Node{slots: n2_slots}) when tuple_size(n1_slots) == @b or tuple_size(n2_slots) == 0 do
