@@ -7,25 +7,23 @@ defmodule RrbTree do
   #
   # A tree is consisted of one Root, many internal Nodes and Leaf nodes.
   """
-
   use Bitwise, only_operators: true
 
   alias RrbTree.Node, as: Node
 
-  @m 2 # Integer: tree branching exponent, as in 2^m. E.g, m = 2 so branching factor of 4.
-
-  @b (1 <<< @m)
-
-  @e 1 # Maximum extra steps on radix search miss
+  @m 2           # Tree branching exponent, as in 2^m. E.g, m = 2 so branching factor of 4.
+  @b (1 <<< @m)  # Branching factor. The number of subtrees per node.
+  @e 1           # Maximum extra steps on radix search miss
 
   defstruct h: 1,   # the tree height. Leaf nodes have height = 1.
             node: %Node{}
 
+  # Public: concatenates two trees.
   def concat(%RrbTree{} = ltree, %RrbTree{} = rtree) do
     do_concat(ltree.node, rtree.node, ltree.h, rtree.h)
   end
 
-  # Given two subtrees, returns a balanced tree
+  # Internal: Given a list of nodes, returns a balanced tree.
   defp make_tree(nodes, h) do
     a = Enum.count(nodes)
     p = Enum.reduce(nodes, 0, fn node, sum -> count_items(node) + sum end)
@@ -34,6 +32,7 @@ defmodule RrbTree do
     nodes |> balance(extra_steps) |> root(h)
   end
 
+  # Internal: groups a list of nodes under a single root. Increase tree height when necessary.
   defp root(nodes, h) do
     do_root(nodes, %RrbTree{
       h: h,
@@ -80,14 +79,7 @@ defmodule RrbTree do
     )
   end
 
-  defp last_range(ranges) when tuple_size(ranges) == 0 do
-    0
-  end
-
-  defp last_range(ranges) do
-    last(ranges)
-  end
-
+  # Internal: given a list of nodes, rebalance then until the maximum extra steps reach the @e criteria.
   defp balance(nodes, extra_steps) do
     balance(nodes, extra_steps, [])
   end
@@ -128,6 +120,7 @@ defmodule RrbTree do
   end
 
   # TODO: Node only
+  # Internal: pushes into the left node as many slots as possible from the right.
   defp join_nodes(n1 = %Node{slots: n1_slots}, n2 = %Node{slots: n2_slots}) when tuple_size(n1_slots) == @b or tuple_size(n2_slots) == 0 do
     [n1, n2]
   end
@@ -159,14 +152,6 @@ defmodule RrbTree do
     )
   end
 
-  defp count_items(%Node{} = node) do
-    tuple_size(node.slots)
-  end
-
-  defp count_items(leaf) do
-    tuple_size(leaf)
-  end
-
   defp do_concat(%Node{} = ltree, %Node{} = rtree, _hl = 2, _hr = 2) do
     make_tree(Tuple.to_list(ltree.slots) ++ Tuple.to_list(rtree.slots), 2)
   end
@@ -174,14 +159,7 @@ defmodule RrbTree do
   defp do_concat(%Node{} = ltree, %Node{} = rtree, hl, hr) when hl == hr do
     mtree = do_concat(rhand(ltree), lhand(rtree), hl - 1, hr - 1)
 
-    # TODO: check correctness when mtree.h > ltree.h OR mtree.h > rtree.h
-    if mtree.h == hl do
-      # IO.puts "mtree.h > hl #{inspect mtree}"
-      make_tree(Tuple.to_list(lbody(ltree).slots) ++ Tuple.to_list(mtree.node.slots) ++ Tuple.to_list(rbody(rtree).slots), hl)
-    else
-      # IO.puts "else \nlbody #{inspect(lbody(ltree))}\n mtree #{inspect(mtree)} \n rbody #{inspect(rbody(rtree))}"
-      # make_tree([lbody(ltree), mtree.node, rbody(rtree)], hl)
-    end
+    make_tree(Tuple.to_list(lbody(ltree).slots) ++ Tuple.to_list(mtree.node.slots) ++ Tuple.to_list(rbody(rtree).slots), hl)
   end
 
   defp do_concat(%Node{} = ltree, %Node{} = rtree, hl, hr) when hl > hr do
@@ -194,48 +172,6 @@ defmodule RrbTree do
     mtree = do_concat(ltree, lhand(rtree), hl, hr - 1)
 
     make_tree(Tuple.to_list(mtree.node.slots) ++ Tuple.to_list(rbody(rtree).slots), hr)
-  end
-
-  defp rhand(%Node{} = node) do
-    last(node.slots)
-  end
-
-  defp lhand(%Node{} = node) do
-    first(node.slots)
-  end
-
-  defp lbody(%Node{ranges: ranges, slots: slots}) do
-    %Node{
-      ranges: Tuple.delete_at(ranges, tuple_size(ranges) - 1),
-      slots: Tuple.delete_at(slots, tuple_size(slots) - 1)
-    }
-  end
-
-  defp rbody(%Node{ranges: ranges, slots: slots}) do
-    %Node{
-      ranges: delete_first_range(ranges),
-      slots: Tuple.delete_at(slots, 0)
-    }
-  end
-
-  defp delete_first_range(ranges) do
-    fst = elem(ranges, 0)
-
-    Tuple.delete_at(ranges, 0)
-      |> Tuple.to_list
-      |> Enum.reduce({}, fn(r, rs) -> append(rs, r - fst) end)
-  end
-
-  defp first(tuple) do
-    elem(tuple, 0)
-  end
-
-  defp last(tuple) do
-    elem(tuple, tuple_size(tuple) - 1)
-  end
-
-  defp append(tuple, e) do
-    Tuple.insert_at(tuple, tuple_size(tuple), e)
   end
 
   def get(%RrbTree{} = t, index) do
@@ -286,5 +222,65 @@ defmodule RrbTree do
     else
       i - elem(ranges, branch_index - 1)
     end
+  end
+
+  # Utils: functions with low abstraction importance, just to DRY code.
+
+  defp last_range(ranges) when tuple_size(ranges) == 0 do
+    0
+  end
+
+  defp last_range(ranges) do
+    last(ranges)
+  end
+
+  defp count_items(%Node{} = node) do
+    tuple_size(node.slots)
+  end
+
+  defp count_items(leaf) do
+    tuple_size(leaf)
+  end
+
+  defp rhand(%Node{} = node) do
+    last(node.slots)
+  end
+
+  defp lhand(%Node{} = node) do
+    first(node.slots)
+  end
+
+  defp lbody(%Node{ranges: ranges, slots: slots}) do
+    %Node{
+      ranges: Tuple.delete_at(ranges, tuple_size(ranges) - 1),
+      slots: Tuple.delete_at(slots, tuple_size(slots) - 1)
+    }
+  end
+
+  defp rbody(%Node{ranges: ranges, slots: slots}) do
+    %Node{
+      ranges: delete_first_range(ranges),
+      slots: Tuple.delete_at(slots, 0)
+    }
+  end
+
+  defp delete_first_range(ranges) do
+    fst = elem(ranges, 0)
+
+    Tuple.delete_at(ranges, 0)
+      |> Tuple.to_list
+      |> Enum.reduce({}, fn(r, rs) -> append(rs, r - fst) end)
+  end
+
+  defp first(tuple) do
+    elem(tuple, 0)
+  end
+
+  defp last(tuple) do
+    elem(tuple, tuple_size(tuple) - 1)
+  end
+
+  defp append(tuple, e) do
+    Tuple.insert_at(tuple, tuple_size(tuple), e)
   end
 end
