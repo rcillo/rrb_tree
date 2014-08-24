@@ -100,7 +100,7 @@ defmodule RrbTree do
     balance(xs, e, [x | result])
   end
 
-  defp balance([x1 = %Node{}, x2 = %Node{slots: slots} | xs], extra_steps, result) when tuple_size(slots) == 0 do
+  defp balance([x1 = %Node{}, _x2 = %Node{slots: slots} | xs], extra_steps, result) when tuple_size(slots) == 0 do
     balance(xs, extra_steps - 1, [x1 | result])
   end
 
