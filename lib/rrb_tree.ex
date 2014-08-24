@@ -18,6 +18,25 @@ defmodule RrbTree do
   # Leaf nodes have height = 1.
   defstruct h: 1, node: %Node{}
 
+  def update(%RrbTree{} = t, i, x) do
+    %{ t | node: do_update(t.node, t.h, i, x) }
+  end
+
+  defp do_update(%Node{} = node, h, i, x) do
+    # TODO: remove duplication from do_get
+    radix = do_radix(i, h)
+    branch_index = do_find_branch_index(node.ranges, radix, i)
+    new_index = do_new_index(node.ranges, branch_index, i)
+
+    updated_node = do_update(elem(node.slots, branch_index), h - 1, new_index, x)
+
+    %{ node | slots: put_elem(node.slots, branch_index, updated_node) }
+  end
+
+  defp do_update(leaf, h = 1, i, x) do
+    put_elem(leaf, i, x)
+  end
+
   # TODO: rewrite add to not use concat, since it doesn't take advantage of leafs with free slots.
   def add(%RrbTree{} = t, x) do
     concat(t, %RrbTree{

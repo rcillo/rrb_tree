@@ -315,4 +315,56 @@ defmodule RrbTreeTest do
       }
     }
   end
+
+  test "update element" do
+    t = %RrbTree{
+      h: 3,
+      node: %Node{ ranges: {15, 31},
+      slots: {
+        %Node{
+          ranges: {4, 8, 12, 15},
+          slots: {
+            {1, 2, 3, 4},
+            {5, 6, 7, 8},
+            {9, 10, 11, 12},
+            {13, 14, 15}
+          }
+        },
+        %Node{
+          ranges: {4, 8, 12, 16},
+          slots: {
+            {16, 17, 18, 19},
+            {20, 21, 22, 23},
+            {24, 25, 26, 27},
+            {28, 29, 30, 31}
+          }
+        }
+      }}
+    }
+
+    assert RrbTree.update(t, 18, :a) == %RrbTree{
+      h: 3,
+      node: %Node{ ranges: {15, 31},
+      slots: {
+        %Node{
+          ranges: {4, 8, 12, 15},
+          slots: {
+            {1, 2, 3, 4},
+            {5, 6, 7, 8},
+            {9, 10, 11, 12},
+            {13, 14, 15}
+          }
+        },
+        %Node{
+          ranges: {4, 8, 12, 16},
+          slots: {
+            {16, 17, 18, :a},
+            {20, 21, 22, 23},
+            {24, 25, 26, 27},
+            {28, 29, 30, 31}
+          }
+        }
+      }}
+    }
+  end
 end
