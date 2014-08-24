@@ -19,6 +19,14 @@ defmodule RrbTree do
             node: %Node{}
 
   # Public: concatenates two trees.
+  def concat(%RrbTree{node: %Node{slots: slots}}, %RrbTree{} = rtree) when tuple_size(slots) == 0 do
+    rtree
+  end
+
+  def concat(%RrbTree{} = ltree, %RrbTree{node: %Node{slots: slots}}) when tuple_size(slots) == 0 do
+    ltree
+  end
+
   def concat(%RrbTree{} = ltree, %RrbTree{} = rtree) do
     do_concat(ltree.node, rtree.node, ltree.h, rtree.h)
   end
