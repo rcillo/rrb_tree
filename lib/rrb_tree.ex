@@ -18,6 +18,7 @@ defmodule RrbTree do
   # Leaf nodes have height = 1.
   defstruct h: 1, node: %Node{}
 
+  # TODO: rewrite add to not use concat, since it doesn't take advantage of leafs with free slots.
   def add(%RrbTree{} = t, x) do
     concat(t, %RrbTree{
       h: 2,
