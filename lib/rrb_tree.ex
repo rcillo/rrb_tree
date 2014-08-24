@@ -15,8 +15,18 @@ defmodule RrbTree do
   @b (1 <<< @m)  # Branching factor. The number of subtrees per node.
   @e 1           # Maximum extra steps on radix search miss
 
-  defstruct h: 1,   # the tree height. Leaf nodes have height = 1.
-            node: %Node{}
+  # Leaf nodes have height = 1.
+  defstruct h: 1, node: %Node{}
+
+  def add(%RrbTree{} = t, x) do
+    concat(t, %RrbTree{
+      h: 2,
+      node: %Node{
+        ranges: {1},
+        slots: {{x}}
+      }
+    })
+  end
 
   # Public: concatenates two trees.
   def concat(%RrbTree{node: %Node{slots: slots}}, %RrbTree{} = rtree) when tuple_size(slots) == 0 do

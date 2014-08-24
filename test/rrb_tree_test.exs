@@ -285,7 +285,7 @@ defmodule RrbTreeTest do
   test "concat with empty tree" do
     t = %RrbTree{h: 2,
       node: %Node{
-        ranges: {1},
+        ranges: {4},
         slots: {
           {1, 2, 3, 4}
         }
@@ -294,5 +294,25 @@ defmodule RrbTreeTest do
 
     assert RrbTree.concat(%RrbTree{}, t) == t
     assert t == RrbTree.concat(%RrbTree{}, t)
+  end
+
+  test "add element" do
+    t = %RrbTree{h: 2,
+      node: %Node{
+        ranges: {1},
+        slots: {
+          {1}
+        }
+      }
+    }
+
+    assert RrbTree.add(t, 2) == %RrbTree{h: 2,
+      node: %Node{
+        ranges: {1, 2},
+        slots: {
+          {1}, {2}
+        }
+      }
+    }
   end
 end
