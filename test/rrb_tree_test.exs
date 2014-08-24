@@ -205,4 +205,81 @@ defmodule RrbTreeTest do
 
     assert RrbTree.concat(t1_2, t3_4) == t
   end
+
+  test "left tree higher than right tree" do
+    t = %RrbTree{h: 2,
+      node: %Node{
+        ranges: {4, 8, 12, 16},
+        slots: {
+          {1, 2, 3, 4},
+          {5, 6, 7, 8},
+          {9, 10, 11, 12},
+          {13, 14, 15, 16}
+        }
+      }
+    }
+
+   lt = %RrbTree{
+      h: 3,
+      node: %Node{
+        ranges: {16, 32},
+        slots: {t.node, t.node}
+      }
+    }
+
+
+    rt = %RrbTree{h: 2,
+      node: %Node{
+        ranges: {4},
+        slots: {
+          {1, 2, 3, 4}
+        }
+      }
+    }
+
+    assert RrbTree.concat(lt, rt) == %RrbTree{h: 3,
+      node: %Node{
+        ranges: {16, 32, 36},
+        slots: {t.node, t.node, rt.node}
+      }
+    }
+  end
+
+  test "left tree higher than right tree" do
+    t = %RrbTree{h: 2,
+      node: %Node{
+        ranges: {4, 8, 12, 16},
+        slots: {
+          {1, 2, 3, 4},
+          {5, 6, 7, 8},
+          {9, 10, 11, 12},
+          {13, 14, 15, 16}
+        }
+      }
+    }
+
+    lt = %RrbTree{h: 2,
+      node: %Node{
+        ranges: {4},
+        slots: {
+          {1, 2, 3, 4}
+        }
+      }
+    }
+
+    rt = %RrbTree{
+      h: 3,
+      node: %Node{
+        ranges: {16, 32},
+        slots: {t.node, t.node}
+      }
+    }
+
+    assert RrbTree.concat(lt, rt) == %RrbTree{h: 3,
+      node: %Node{
+        ranges: {4, 20, 36},
+        slots: {lt.node, t.node, t.node}
+      }
+    }
+  end
 end

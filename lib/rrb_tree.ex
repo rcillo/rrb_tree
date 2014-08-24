@@ -31,8 +31,6 @@ defmodule RrbTree do
     p = Enum.reduce(nodes, 0, fn node, sum -> count_items(node) + sum end)
     extra_steps = a - ((p - 1) >>> @m) - 1
 
-    #IO.puts "extra steps #{extra_steps}"
-
     nodes |> balance(extra_steps) |> root(h)
   end
 
@@ -70,14 +68,6 @@ defmodule RrbTree do
     )
   end
 
-  def last_range(ranges) when tuple_size(ranges) == 0 do
-    0
-  end
-
-  def last_range(ranges) do
-    last(ranges)
-  end
-
   # TODO: remove duplication of logic for Leaf and Nodes
   def do_root([node | nodes], root = %RrbTree{}) do
     do_root(nodes,
@@ -88,6 +78,14 @@ defmodule RrbTree do
         }
       }
     )
+  end
+
+  def last_range(ranges) when tuple_size(ranges) == 0 do
+    0
+  end
+
+  def last_range(ranges) do
+    last(ranges)
   end
 
   def balance(nodes, extra_steps) do
@@ -115,10 +113,7 @@ defmodule RrbTree do
     balance([x1, x2 | xs], extra_steps, result)
   end
 
-  # TODO: Tuple only duplication
-#  def balance([slots | xs], extra_steps, result) when tuple_size(slots) == 0 do
-#    balance(xs, extra_steps - 1, result)
-#  end
+  # TODO: Leaf only
   def balance([x1, x2 | xs], e, result) when tuple_size(x2) == 0 do
     balance(xs, e - 1, [x1 | result])
   end
@@ -187,6 +182,18 @@ defmodule RrbTree do
       # IO.puts "else \nlbody #{inspect(lbody(ltree))}\n mtree #{inspect(mtree)} \n rbody #{inspect(rbody(rtree))}"
       # make_tree([lbody(ltree), mtree.node, rbody(rtree)], hl)
     end
+  end
+
+  def do_concat(%Node{} = ltree, %Node{} = rtree, hl, hr) when hl > hr do
+    mtree = do_concat(rhand(ltree), rtree, hl - 1, hr)
+
+    make_tree(Tuple.to_list(lbody(ltree).slots) ++ Tuple.to_list(mtree.node.slots), hl)
+  end
+
+  def do_concat(%Node{} = ltree, %Node{} = rtree, hl, hr) when hl < hr do
+    mtree = do_concat(ltree, lhand(rtree), hl, hr - 1)
+
+    make_tree(Tuple.to_list(mtree.node.slots) ++ Tuple.to_list(rbody(rtree).slots), hr)
   end
 
   def rhand(%Node{} = node) do
