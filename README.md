@@ -1,4 +1,4 @@
-RRB-Tree implementation for the Vector protocol
+WIP: RRB-Tree implementation for immutable vectors
 =======
 
 # Motivation
@@ -8,7 +8,5 @@ on the paper *RRB-Trees: Efficient Immutable Vectors*, by *Phil Bagwell* and
 *Tiark Rompf*.
 
 ## Algorithmic complexity
-
-The following is a table of operations and their algorithmic complexity.
 
 ## Benchmark
