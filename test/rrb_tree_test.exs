@@ -367,4 +367,57 @@ defmodule RrbTreeTest do
       }}
     }
   end
+
+  test "delete index" do
+    t = %RrbTree{h: 2,
+      node: %Node{
+        ranges: {4, 8, 12, 16},
+        slots: {
+          {1, 2, 3, 4},
+          {5, 6, 7, 8},
+          {9, 10, 11, 12},
+          {13, 14, 15, 16}
+        }
+      }
+    }
+
+    assert RrbTree.delete(t, 5) == %RrbTree{h: 2,
+      node: %Node{
+        ranges: {4, 7, 11, 15},
+        slots: {
+          {1, 2, 3, 4},
+          {5, 7, 8},
+          {9, 10, 11, 12},
+          {13, 14, 15, 16}
+        }
+      }
+    }
+  end
+
+  test "delete removes empty node" do
+    t = %RrbTree{h: 2,
+      node: %Node{
+        ranges: {4, 8, 12, 16},
+        slots: {
+          {1, 2, 3, 4},
+          {5},
+          {9, 10, 11, 12},
+          {13, 14, 15, 16}
+        }
+      }
+    }
+
+    nt = t |> RrbTree.delete(4)
+
+    assert nt == %RrbTree{h: 2,
+      node: %Node{
+        ranges: {4, 8, 12},
+        slots: {
+          {1, 2, 3, 4},
+          {9, 10, 11, 12},
+          {13, 14, 15, 16}
+        }
+      }
+    }
+  end
 end

@@ -18,6 +18,27 @@ defmodule RrbTree do
   # Leaf nodes have height = 1.
   defstruct h: 1, node: %Node{}
 
+  def delete(%RrbTree{} = t, i) do
+    do_delete(t.node, t.h, i)
+  end
+
+  defp do_delete(%Node{} = node, h, i) do
+    # TODO: remove duplication from do_get
+    radix = do_radix(i, h)
+    branch_index = do_find_branch_index(node.ranges, radix, i)
+    new_index = do_new_index(node.ranges, branch_index, i)
+
+    updated_node = do_delete(elem(node.slots, branch_index), h - 1, new_index)
+
+    new_node = %{node | slots: put_elem(node.slots, branch_index, updated_node)}
+
+    make_tree(Tuple.to_list(new_node.slots), h)
+  end
+
+  defp do_delete(leaf, h = 1, i) do
+    Tuple.delete_at(leaf, i)
+  end
+
   def update(%RrbTree{} = t, i, x) do
     %{ t | node: do_update(t.node, t.h, i, x) }
   end
@@ -126,12 +147,24 @@ defmodule RrbTree do
     Enum.reverse(result)
   end
 
-  defp balance([x | xs], e, result) when e <= @e do
-    balance(xs, e, [x | result])
+  defp balance([x1 = %Node{slots: slots} | xs], extra_steps, result) when tuple_size(slots) == 0 do
+    balance(xs, extra_steps - 1, result)
+  end
+
+  defp balance([x1 = {} | xs], extra_steps, result) do
+    balance(xs, extra_steps - 1, result)
   end
 
   defp balance([x1 = %Node{}, _x2 = %Node{slots: slots} | xs], extra_steps, result) when tuple_size(slots) == 0 do
     balance(xs, extra_steps - 1, [x1 | result])
+  end
+
+  defp balance([x | xs], e, result) when e <= @e do
+    balance(xs, e, [x | result])
+  end
+
+  defp balance([x | xs], e, result) when e <= @e do
+    balance(xs, e, [x | result])
   end
 
   defp balance([x1 = %Node{slots: slots}, x2 | xs], extra_steps, result) when tuple_size(slots) == @b do
