@@ -18,6 +18,35 @@ defmodule RrbTree do
   # Leaf nodes have height = 1.
   defstruct h: 1, node: %Node{}
 
+  def split(%RrbTree{} = t, i) do
+    do_split(t.node, t.h, i)
+  end
+
+  defp do_split(%Node{} = node, h, i) do
+    radix = do_radix(i, h)
+    branch_index = do_find_branch_index(node.ranges, radix, i)
+    new_index = do_new_index(node.ranges, branch_index, i)
+
+    branch = elem(node.slots, branch_index)
+
+    [sleft, sright] = do_split(branch, h - 1, new_index)
+
+    lt = %RrbTree{ h: h, node: lbody(node, @b - branch_index - 1) }
+    rt = %RrbTree{ h: h, node: rbody(node, branch_index + 1) }
+
+    ltree = concat(lt, sleft)
+    rtree = concat(sright, rt)
+
+    [ltree, rtree]
+  end
+
+  defp do_split(leaf, h = 1, i) do
+    [
+      root([take(leaf, i)], h + 1),
+      root([drop(leaf, i)], h + 1)
+    ]
+  end
+
   def delete(%RrbTree{} = t, i) do
     do_delete(t.node, t.h, i)
   end
@@ -328,12 +357,18 @@ defmodule RrbTree do
     }
   end
 
+  defp lbody(%Node{} = node, i) when i < 0, do: node
+  defp lbody(%Node{} = node, i), do: lbody(node) |> lbody(i - 1)
+
   defp rbody(%Node{ranges: ranges, slots: slots}) do
     %Node{
       ranges: delete_first_range(ranges),
       slots: Tuple.delete_at(slots, 0)
     }
   end
+
+  defp rbody(%Node{} = node, _i = 0), do: node
+  defp rbody(%Node{} = node, i), do: rbody(node) |> rbody(i - 1)
 
   defp delete_first_range(ranges) do
     fst = elem(ranges, 0)
@@ -354,4 +389,10 @@ defmodule RrbTree do
   defp append(tuple, e) do
     Tuple.insert_at(tuple, tuple_size(tuple), e)
   end
+
+  defp take(tuple, i) when tuple_size(tuple) == i, do: tuple
+  defp take(tuple, i) , do: take(Tuple.delete_at(tuple, tuple_size(tuple) - 1), i)
+
+  defp drop(tuple, i) when i == 0, do: tuple
+  defp drop(tuple, i) , do: drop(Tuple.delete_at(tuple, 0), i - 1)
 end

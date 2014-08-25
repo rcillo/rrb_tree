@@ -422,4 +422,33 @@ defmodule RrbTreeTest do
   end
 
   # TODO: test case when the tree height gets decreases
+
+  test "split" do
+    t = %RrbTree{h: 2,
+      node: %Node{
+        ranges: {4, 8, 12, 16},
+        slots: {
+          {1, 2, 3, 4},
+          {5, 6, 7, 8},
+          {9, 10, 11, 12},
+          {13, 14, 15, 16}
+        }
+      }
+    }
+
+    assert RrbTree.split(t, 6) == [
+      %RrbTree{h: 2,
+        node: %Node{
+          ranges: {4, 6},
+          slots: { {1, 2, 3, 4}, {5, 6} }
+        }
+      },
+      %RrbTree{h: 2,
+        node: %Node{
+          ranges: {2, 6, 10},
+          slots: { {7, 8}, {9, 10, 11, 12}, {13, 14, 15, 16} }
+        }
+      }
+    ]
+  end
 end
