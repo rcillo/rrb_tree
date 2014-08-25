@@ -420,4 +420,6 @@ defmodule RrbTreeTest do
       }
     }
   end
+
+  # TODO: test case when the tree height gets decreases
 end
