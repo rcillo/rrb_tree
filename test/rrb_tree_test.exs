@@ -451,4 +451,6 @@ defmodule RrbTreeTest do
       }
     ]
   end
+
+  # TODO: test split edge cases: beggining or end of node
 end
