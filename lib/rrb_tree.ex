@@ -31,7 +31,7 @@ defmodule RrbTree do
 
     [sleft, sright] = do_split(branch, h - 1, new_index)
 
-    lt = %RrbTree{ h: h, node: lbody(node, @b - branch_index - 1) }
+    lt = %RrbTree{ h: h, node: lbody(node, tuple_size(node.slots) - branch_index - 1) }
     rt = %RrbTree{ h: h, node: rbody(node, branch_index + 1) }
 
     ltree = concat(lt, sleft)
